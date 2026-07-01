@@ -19,31 +19,36 @@ export default defineEventHandler(async (event) => {
   const meeting = body.meetingId
     ? await db.meeting.findUnique({ where: { id: body.meetingId }, include: { caterer: true } })
     : await db.meeting.findFirst({
-        where: { status: 'scheduled', rsvpDeadline: { gt: now }, date: { gt: now } },
+        where: { status: 'scheduled', date: { gt: now } },
         orderBy: { date: 'asc' },
         include: { caterer: true }
       })
 
   if (!meeting) throw createError({ statusCode: 404, statusMessage: 'no_open_meeting' })
-  if (meeting.rsvpDeadline < now) throw createError({ statusCode: 400, statusMessage: 'deadline_passed' })
+  if (meeting.status === 'cancelled') throw createError({ statusCode: 400, statusMessage: 'meeting_cancelled' })
+  if (meeting.date < now) throw createError({ statusCode: 400, statusMessage: 'meeting_over' })
+
+  // late responses are allowed — they just get flagged, like on the website
+  const late = meeting.rsvpDeadline < now
 
   await db.rsvp.upsert({
     where: { userId_meetingId: { userId: user.id, meetingId: meeting.id } },
-    create: { userId: user.id, meetingId: meeting.id, attending: !!body.attending },
-    update: { attending: !!body.attending }
+    create: { userId: user.id, meetingId: meeting.id, attending: !!body.attending, late },
+    update: { attending: !!body.attending, late }
   })
 
   const request = (body.request || '').trim().slice(0, 300)
   if (request && meeting.catererId) {
     await db.mealRequest.upsert({
       where: { userId_meetingId: { userId: user.id, meetingId: meeting.id } },
-      create: { userId: user.id, meetingId: meeting.id, text: request },
-      update: { text: request }
+      create: { userId: user.id, meetingId: meeting.id, text: request, late },
+      update: { text: request, late }
     })
   }
 
   return {
     ok: true,
+    late,
     meeting: {
       id: meeting.id,
       title: meeting.title,

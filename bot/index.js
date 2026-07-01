@@ -4,7 +4,10 @@ import {
   REST,
   Routes,
   SlashCommandBuilder,
-  EmbedBuilder
+  EmbedBuilder,
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle
 } from 'discord.js'
 
 const {
@@ -39,6 +42,34 @@ async function api(path, options = {}) {
 }
 
 const ts = (iso, style = 'F') => `<t:${Math.floor(new Date(iso).getTime() / 1000)}:${style}>`
+
+/** Yes/No RSVP buttons attached to reminder messages. */
+const rsvpRow = (meetingId) =>
+  new ActionRowBuilder().addComponents(
+    new ButtonBuilder().setCustomId(`rsvp|yes|${meetingId}`).setLabel("I'm in ✅").setStyle(ButtonStyle.Success),
+    new ButtonBuilder().setCustomId(`rsvp|no|${meetingId}`).setLabel("Can't make it ❌").setStyle(ButtonStyle.Danger)
+  )
+
+const NOT_LINKED_MSG = `Looks like your Discord isn't linked to LunchPad yet — that takes 10 seconds: open ${PUBLIC_APP_URL}/profile, click **Connect Discord**, then tap the button again.`
+
+function rsvpReply(result, attending) {
+  const when = ts(result.meeting.date)
+  let msg = attending
+    ? `✅ You're in for **${result.meeting.title}** on ${when}!`
+    : `❌ Noted — you won't be at **${result.meeting.title}** on ${when}.`
+  if (result.late) {
+    msg += `\n⏰ Heads-up: the RSVP deadline had already passed, so the food may already be ordered — we'll do our best to accommodate you.`
+  }
+  return msg
+}
+
+function rsvpErrorReply(e) {
+  if (e.status === 404 && e.message.includes('not_linked')) return NOT_LINKED_MSG
+  if (e.message.includes('no_open_meeting')) return 'There is no upcoming meeting to RSVP for right now.'
+  if (e.message.includes('meeting_cancelled')) return 'That meeting has been cancelled — no food to RSVP for.'
+  if (e.message.includes('meeting_over')) return 'That meeting has already happened.'
+  return 'Something went wrong, please try again later.'
+}
 
 /* ------------------------------------------------------------- reminders */
 
@@ -76,7 +107,7 @@ async function checkReminders(client) {
               .filter(Boolean)
               .join('\n')
           )
-        await channel.send({ embeds: [embed] })
+        await channel.send({ embeds: [embed], components: [rsvpRow(m.id)] })
         await api('/api/internal/reminder-log', {
           method: 'POST',
           body: JSON.stringify({ meetingId: m.id, kind: 'channel' })
@@ -93,10 +124,12 @@ async function checkReminders(client) {
       for (const discordId of m.nonResponderDiscordIds) {
         try {
           const dmUser = await client.users.fetch(discordId)
-          await dmUser.send(
-            `👋 Friendly reminder: you haven't RSVP'd for **${m.title}** on ${ts(m.date)}.\n` +
-              `RSVP closes ${ts(m.rsvpDeadline, 'R')} — reply with \`/rsvp\` in the server or visit ${PUBLIC_APP_URL}`
-          )
+          await dmUser.send({
+            content:
+              `👋 Friendly reminder: you haven't RSVP'd for **${m.title}** on ${ts(m.date)}.\n` +
+              `RSVP closes ${ts(m.rsvpDeadline, 'R')} — tap a button below, or visit ${PUBLIC_APP_URL}`,
+            components: [rsvpRow(m.id)]
+          })
         } catch (e) {
           // user may have DMs disabled — reminder is best-effort
           console.error(`DM to ${discordId} failed:`, e.message)
@@ -135,6 +168,22 @@ const commands = [
 ].map((c) => c.toJSON())
 
 async function handleInteraction(interaction) {
+  // Yes/No buttons under reminder messages (customId: "rsvp|yes|<meetingId>")
+  if (interaction.isButton() && interaction.customId.startsWith('rsvp|')) {
+    const [, choice, meetingId] = interaction.customId.split('|')
+    const attending = choice === 'yes'
+    try {
+      const result = await api('/api/internal/rsvp', {
+        method: 'POST',
+        body: JSON.stringify({ discordId: interaction.user.id, meetingId, attending })
+      })
+      await interaction.reply({ content: rsvpReply(result, attending), ephemeral: true })
+    } catch (e) {
+      await interaction.reply({ content: rsvpErrorReply(e), ephemeral: true })
+    }
+    return
+  }
+
   if (!interaction.isChatInputCommand()) return
 
   if (interaction.commandName === 'rsvp') {
@@ -145,24 +194,13 @@ async function handleInteraction(interaction) {
         method: 'POST',
         body: JSON.stringify({ discordId: interaction.user.id, attending, request })
       })
-      const when = ts(result.meeting.date)
-      let msg = attending
-        ? `✅ You're in for **${result.meeting.title}** on ${when}!`
-        : `❌ Noted — you won't be at **${result.meeting.title}** on ${when}.`
+      let msg = rsvpReply(result, attending)
       if (result.requestSaved) msg += `\n📝 Request saved for ${result.meeting.catererName}.`
       else if (request && !result.requestSaved)
         msg += `\n(No caterer is set for that meeting yet, so your request wasn't saved.)`
       await interaction.reply({ content: msg, ephemeral: true })
     } catch (e) {
-      let msg = 'Something went wrong, please try again later.'
-      if (e.status === 404 && e.message.includes('not_linked')) {
-        msg = `You haven't linked your Discord account yet. Visit ${PUBLIC_APP_URL}/profile and click **Connect Discord** (takes 10 seconds).`
-      } else if (e.message.includes('no_open_meeting')) {
-        msg = 'There is no upcoming meeting with an open RSVP right now.'
-      } else if (e.message.includes('deadline_passed')) {
-        msg = 'Sorry, the RSVP deadline for the next meeting has already passed.'
-      }
-      await interaction.reply({ content: msg, ephemeral: true })
+      await interaction.reply({ content: rsvpErrorReply(e), ephemeral: true })
     }
   }
 
