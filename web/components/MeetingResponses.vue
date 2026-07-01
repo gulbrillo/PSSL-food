@@ -46,6 +46,7 @@ const hasLate = computed(
     <div class="row top">
       <div class="grow">
         <h3>✅ Attending ({{ summary.totalAttending }})</h3>
+        <div class="table-scroll">
         <table class="plain">
           <tr v-for="a in summary.attending" :key="a.name">
             <td>
@@ -65,6 +66,7 @@ const hasLate = computed(
             <td><button class="btn sm ghost danger" title="Remove guest" @click="removeGuest(g.id)">✕</button></td>
           </tr>
         </table>
+        </div>
 
         <div class="mt">
           <button v-if="!addingGuest" class="btn sm" @click="addingGuest = true">＋ Add a guest</button>
@@ -78,6 +80,7 @@ const hasLate = computed(
                 :key="r.id"
                 class="chip mini"
                 :class="{ active: guest.restrictions.includes(r.name) }"
+                :title="r.description || ''"
                 @click="toggleGuestRestriction(r.name)"
               >
                 {{ r.name }}

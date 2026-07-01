@@ -9,7 +9,7 @@ export default defineEventHandler(async (event) => {
     .map((m) => ({
       date: new Date(m.date),
       rsvpDeadline: new Date(m.rsvpDeadline),
-      title: (m.title || 'Lab Meeting').trim()
+      title: (m.title || 'PSSL Group Meeting').trim()
     }))
     .filter((m) => !isNaN(m.date.getTime()) && !isNaN(m.rsvpDeadline.getTime()))
 

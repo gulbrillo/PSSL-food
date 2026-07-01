@@ -17,20 +17,21 @@ const upcoming = computed(() =>
   (meetings.value || []).filter((m: any) => new Date(m.date) > new Date(Date.now() - 4 * 3600_000))
 )
 
+const dialog = useDialog()
+
 async function rsvp(m: any, attending: boolean) {
-  if (
-    m.deadlinePassed &&
-    !confirm(
-      'The RSVP deadline for this meeting has passed. Your change will still be saved, but it will be marked as late (*) in the attendance list. Continue?'
+  if (m.deadlinePassed) {
+    const ok = await dialog.confirm(
+      "The RSVP deadline for this meeting has passed, so the food order may already be finalized.\n\nWe'll happily record your change and do our best to make it work — we just can't promise anything at this point. Your response will get a small * so whoever is ordering knows it came in late.",
+      { title: 'A little late — no worries!', confirmText: 'Update my RSVP', cancelText: 'Never mind' }
     )
-  ) {
-    return
+    if (!ok) return
   }
   try {
     await $fetch(`/api/meetings/${m.id}/rsvp`, { method: 'POST', body: { attending } })
     await refresh()
   } catch (e: any) {
-    alert(e.data?.statusMessage || 'Could not save your RSVP')
+    dialog.notify(e.data?.statusMessage || 'Could not save your RSVP — please try again.', 'Something went wrong')
   }
 }
 
@@ -44,7 +45,7 @@ async function saveRequest(m: any) {
     setTimeout(() => (savedNote.value = ''), 2000)
     await refresh()
   } catch (e: any) {
-    alert(e.data?.statusMessage || 'Could not save your request')
+    dialog.notify(e.data?.statusMessage || 'Could not save your request — please try again.', 'Something went wrong')
   }
 }
 
@@ -83,7 +84,7 @@ function headCount(m: any) {
           <div class="muted">{{ m.title }}</div>
         </div>
         <span v-if="m.status === 'cancelled'" class="badge-cancelled">Cancelled</span>
-        <span v-else-if="m.deadlinePassed" class="pill late">RSVP closed · late changes flagged *</span>
+        <span v-else-if="m.deadlinePassed" class="pill late">RSVP closed — updates still welcome *</span>
         <span v-else class="pill warn">RSVP {{ deadlineCountdown(m.rsvpDeadline) }}</span>
       </div>
 
@@ -105,7 +106,8 @@ function headCount(m: any) {
           </button>
         </div>
         <p v-if="m.myLate" class="late-text" style="margin: 6px 0 0">
-          * your response changed after the deadline — it still counts, but it's flagged in the list
+          * you responded after the deadline — we'll do our best to accommodate you, but the food
+          may already be ordered
         </p>
 
         <div class="row mt">
@@ -133,7 +135,9 @@ function headCount(m: any) {
             Remember as my usual for {{ m.caterer.name }}
           </label>
           <span v-if="savedNote === m.id" class="ok-text">Saved ✓</span>
-          <span v-if="m.deadlinePassed" class="late-text"> — deadline passed, requests are marked late (*)</span>
+          <span v-if="m.deadlinePassed" class="late-text">
+            — the order may already be placed; we'll pass this along and try our best
+          </span>
         </div>
         <p v-else-if="m.myRequest" class="muted small mt">Your request: “{{ m.myRequest }}”</p>
       </div>

@@ -1,5 +1,6 @@
 node_modules/
 .env
+apache-vhost-*.conf
 .nuxt/
 .output/
 dist/

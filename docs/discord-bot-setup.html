@@ -1,0 +1,169 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>PSSL LunchPad — Discord Bot Setup</title>
+<style>
+  @page { size: letter; margin: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    color: #171a26; font-size: 10.5px; line-height: 1.45;
+    width: 8.5in; height: 11in; padding: 0.45in 0.55in;
+  }
+  .header {
+    background: linear-gradient(120deg, #0a1856, #26154f);
+    color: #fff; border-radius: 14px; padding: 16px 22px; margin-bottom: 14px;
+    display: flex; align-items: center; gap: 14px;
+  }
+  .header h1 { font-size: 21px; letter-spacing: -0.02em; }
+  .header h1 .accent { color: #ffb59f; }
+  .header p { color: #c4cdf3; font-size: 11px; margin-top: 2px; }
+  h2 {
+    font-size: 12.5px; color: #0a1856; margin: 12px 0 5px;
+    text-transform: uppercase; letter-spacing: 0.05em;
+  }
+  .cols { display: flex; gap: 18px; }
+  .col { flex: 1; }
+  ol { padding-left: 18px; }
+  ol li, ul li { margin-bottom: 4px; }
+  ul { padding-left: 16px; }
+  code {
+    font-family: Consolas, monospace; font-size: 9.5px;
+    background: #eef0f9; border-radius: 4px; padding: 1px 4px; color: #1f3bb3;
+  }
+  pre {
+    font-family: Consolas, monospace; font-size: 9.5px;
+    background: #0f1330; color: #d9e0ff; border-radius: 8px;
+    padding: 9px 12px; margin: 5px 0; line-height: 1.5;
+  }
+  pre .c { color: #7d88c4; }
+  .box {
+    border: 1.2px solid #e4e7f2; border-radius: 10px;
+    padding: 9px 12px; margin: 6px 0; background: #f8f9fd;
+  }
+  .box.orange { background: #fff5f1; border-color: #f6c9b8; }
+  .small { font-size: 9.5px; color: #656b7e; }
+  .footer { margin-top: 10px; padding-top: 7px; border-top: 1px solid #e4e7f2;
+    font-size: 9px; color: #656b7e; display: flex; justify-content: space-between; }
+  b.step { color: #fa4616; }
+  table { border-collapse: collapse; width: 100%; font-size: 9.8px; margin-top: 3px; }
+  td { padding: 2.5px 6px 2.5px 0; vertical-align: top; border-bottom: 1px solid #eef0f9; }
+  td:first-child { font-family: Consolas, monospace; color: #1f3bb3; white-space: nowrap; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <svg width="52" height="52" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="32" cy="32" r="31" fill="#ffffff" opacity="0.08"/>
+    <path d="M25 51 Q32 63 39 51 Q35.5 55 32 54 Q28.5 55 25 51 Z" fill="#ffb020"/>
+    <path d="M28.5 52 Q32 59 35.5 52 Q32 54 28.5 52 Z" fill="#fa4616"/>
+    <path d="M32 7 L44.5 45.5 Q32 51.5 19.5 45.5 Z" fill="#f7c873"/>
+    <path d="M32 11.5 L42 43.5 Q32 48.5 22 43.5 Z" fill="#fa4616" opacity="0.92"/>
+    <path d="M19.5 45.5 Q32 51.5 44.5 45.5 L43 50 Q32 55.2 21 50 Z" fill="#e08a2e"/>
+    <circle cx="32" cy="23" r="3.4" fill="#ffe1b3"/>
+    <circle cx="27.5" cy="36" r="2.7" fill="#ffe1b3"/>
+    <circle cx="36.5" cy="36" r="2.7" fill="#ffe1b3"/>
+  </svg>
+  <div>
+    <h1>Lunch<span class="accent">Pad</span> · Discord Bot Setup</h1>
+    <p>Connecting <b>lunchpad.darkcosmos.org</b> to the <b>PSSL Shenanigans</b> Discord server</p>
+  </div>
+</div>
+
+<div class="cols">
+<div class="col">
+
+<h2>What it does</h2>
+<ul>
+  <li><b>48 h before</b> each RSVP deadline: posts a reminder in your lab channel (meeting, caterer, deadline, response count).</li>
+  <li><b>24 h before</b>: sends a personal DM to every linked member who hasn't responded.</li>
+  <li>Slash commands: <code>/rsvp yes|no [request]</code> and <code>/meeting</code> — RSVP without opening the website.</li>
+  <li>Members link their Discord once via <b>Profile → Connect Discord</b> on the website.</li>
+</ul>
+
+<h2>Where does it run?</h2>
+<div class="box">
+  On your own server — it is the <code>bot</code> container of the existing
+  docker-compose stack. <b>No extra hosting needed.</b> It opens an outbound
+  connection to Discord; no inbound ports, no public URL. It talks to the web
+  app internally over the Docker network.
+</div>
+
+<h2>1 · Create the Discord application</h2>
+<ol>
+  <li>Go to <b>discord.com/developers/applications</b> → <b>New Application</b>, name it <i>LunchPad</i>.</li>
+  <li><b>OAuth2</b> tab → copy <b>Client ID</b>; click <i>Reset Secret</i> → copy <b>Client Secret</b>.</li>
+  <li>Same tab, under <i>Redirects</i>, add:<br>
+      <code>https://lunchpad.darkcosmos.org/auth/discord/callback</code></li>
+  <li><b>Bot</b> tab → <i>Reset Token</i> → copy the <b>Bot Token</b>.
+      <span class="small">(No privileged intents needed.)</span></li>
+</ol>
+
+<h2>2 · Invite the bot to PSSL Shenanigans</h2>
+<ol>
+  <li><b>OAuth2 → URL Generator</b>: check scopes <code>bot</code> + <code>applications.commands</code>.</li>
+  <li>Bot permissions: <b>Send Messages</b>.</li>
+  <li>Open the generated URL, pick <b>PSSL Shenanigans</b>, authorize.
+      <span class="small">(You need Manage Server rights there.)</span></li>
+</ol>
+
+</div>
+<div class="col">
+
+<h2>3 · Copy the reminder channel's ID</h2>
+<ol>
+  <li>Discord → <b>Settings → Advanced → Developer Mode: ON</b>.</li>
+  <li>In <b>PSSL Shenanigans</b>, right-click the channel where reminders
+      should be posted (e.g. <code>#lab-meetings</code>) → <i>Copy Channel ID</i>.</li>
+</ol>
+<div class="box">
+  The server ID is already known — <b>PSSL Shenanigans</b> =
+  <code>1063560400332927076</code> (pre-filled below).
+</div>
+
+<h2>4 · Enable it on the server (after the fact)</h2>
+<div class="box orange">
+  Skipped Discord during <code>install.sh</code>? Just fill in the five values
+  in <code>.env</code> — no reinstall needed.
+</div>
+<pre>cd PSSL-food
+nano .env</pre>
+<pre>DISCORD_CLIENT_ID=<span class="c">…from step 1.2</span>
+DISCORD_CLIENT_SECRET=<span class="c">…from step 1.2</span>
+DISCORD_BOT_TOKEN=<span class="c">…from step 1.4</span>
+DISCORD_GUILD_ID=1063560400332927076
+DISCORD_CHANNEL_ID=<span class="c">…channel ID, step 3</span></pre>
+<pre>docker compose up -d   <span class="c"># recreates the bot with the new config</span>
+docker compose logs -f bot   <span class="c"># expect: "Logged in as …",</span>
+                             <span class="c">#         "Slash commands registered"</span></pre>
+
+<h2>5 · Tell the lab</h2>
+<div class="box">
+  Everyone opens <b>lunchpad.darkcosmos.org → Profile → Connect Discord</b>
+  (one click). Only linked members can get DM reminders and use
+  <code>/rsvp</code> — unlinked members still see the channel reminders.
+</div>
+
+<h2>Tuning &amp; troubleshooting</h2>
+<table>
+  <tr><td>CHANNEL_REMINDER_HOURS</td><td>hours before deadline for the channel post (default 48)</td></tr>
+  <tr><td>DM_REMINDER_HOURS</td><td>hours before deadline for personal DMs (default 24)</td></tr>
+</table>
+<ul style="margin-top:5px">
+  <li>Bot container restart-loops until the token is set — that's expected, harmless.</li>
+  <li>No DMs received? The member's privacy settings must allow DMs from server members.</li>
+  <li>Slash commands appear seconds after startup (registered per-server, not global).</li>
+</ul>
+
+</div>
+</div>
+
+<div class="footer">
+  <span>PSSL LunchPad — Precision Space Systems Lab, University of Florida</span>
+  <span>github repo: PSSL-food · docs/discord-bot-setup.pdf</span>
+</div>
+
+</body>
+</html>

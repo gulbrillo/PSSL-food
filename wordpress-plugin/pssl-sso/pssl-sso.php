@@ -2,7 +2,7 @@
 /**
  * Plugin Name: PSSL SSO Provider
  * Description: Lets external PSSL apps (like the food site) sign users in with their PSSL WordPress account via a minimal OAuth 2.0 authorization-code flow. Activate on the PSSL site of the network only.
- * Version:     1.0.0
+ * Version:     1.1.0
  * Author:      PSSL
  */
 
@@ -34,6 +34,7 @@ class PSSL_SSO_Provider {
 					'client_id'     => 'pssl-food-' . substr( bin2hex( random_bytes( 8 ) ), 0, 12 ),
 					'client_secret' => bin2hex( random_bytes( 32 ) ),
 					'redirect_uris' => array(),
+					'google_direct' => false,
 				),
 				false
 			);
@@ -46,7 +47,7 @@ class PSSL_SSO_Provider {
 			$this->activate();
 			$s = get_option( self::OPTION );
 		}
-		return $s;
+		return wp_parse_args( $s, array( 'google_direct' => false, 'redirect_uris' => array() ) );
 	}
 
 	/* ------------------------------------------------------ authorize (GET) */
@@ -78,6 +79,15 @@ class PSSL_SSO_Provider {
 		}
 
 		if ( ! is_user_logged_in() ) {
+			if ( ! empty( $s['google_direct'] ) ) {
+				// Skip the wp-login page and jump straight into the Google/UF SSO
+				// flow provided by the site's Google login plugin, which returns
+				// the user to this authorize URL afterwards.
+				$requested = ( is_ssl() ? 'https://' : 'http://' ) . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
+				$login_url = home_url( '/?google_redirect&redirect_to=' . rawurlencode( $requested ) );
+				wp_redirect( $login_url ); // phpcs:ignore WordPress.Security.SafeRedirect -- same-site login URL
+				exit;
+			}
 			auth_redirect(); // sends to wp-login (and through the site's SSO), then back to this URL
 			exit;
 		}
@@ -231,6 +241,7 @@ class PSSL_SSO_Provider {
 		if ( isset( $_POST['pssl_sso_save'] ) && check_admin_referer( 'pssl_sso_settings' ) ) {
 			$uris = isset( $_POST['redirect_uris'] ) ? sanitize_textarea_field( wp_unslash( $_POST['redirect_uris'] ) ) : '';
 			$s['redirect_uris'] = array_values( array_filter( array_map( 'trim', explode( "\n", $uris ) ) ) );
+			$s['google_direct'] = ! empty( $_POST['google_direct'] );
 			if ( ! empty( $_POST['regenerate_secret'] ) ) {
 				$s['client_secret'] = bin2hex( random_bytes( 32 ) );
 			}
@@ -257,6 +268,15 @@ class PSSL_SSO_Provider {
 				<h2>Allowed redirect URIs</h2>
 				<p>One per line, exact match. For the food site this is <code>https://&lt;food-domain&gt;/auth/wp/callback</code></p>
 				<textarea name="redirect_uris" rows="4" cols="70"><?php echo esc_textarea( implode( "\n", (array) $s['redirect_uris'] ) ); ?></textarea>
+				<h2>Login behavior</h2>
+				<p>
+					<label>
+						<input type="checkbox" name="google_direct" value="1" <?php checked( ! empty( $s['google_direct'] ) ); ?>>
+						Send users who are not logged in straight to the Google / UF SSO sign-in
+						(skips the WordPress username&amp;password page; requires the Google login
+						plugin that handles <code>?google_redirect</code> on this site)
+					</label>
+				</p>
 				<p><label><input type="checkbox" name="regenerate_secret" value="1"> Regenerate client secret (breaks existing apps until they are updated)</label></p>
 				<p><button type="submit" name="pssl_sso_save" value="1" class="button button-primary">Save</button></p>
 			</form>

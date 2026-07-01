@@ -1,0 +1,182 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>LunchPad — Flyer</title>
+<style>
+  @page { size: letter; margin: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    color: #171a26; width: 8.5in; height: 11in;
+    background: #f2f4fb;
+  }
+
+  /* ------------------------------------------------------------- hero */
+  .hero {
+    background:
+      radial-gradient(700px 380px at 85% -60px, rgba(250, 70, 22, 0.35) 0%, transparent 55%),
+      radial-gradient(500px 300px at -60px 110%, rgba(31, 59, 179, 0.55) 0%, transparent 60%),
+      linear-gradient(155deg, #0a1856 0%, #101d5e 45%, #060d33 100%);
+    color: #fff; padding: 0.55in 0.6in 0.5in;
+    position: relative; overflow: hidden;
+  }
+  .star { position: absolute; background: #fff; border-radius: 50%; }
+  .hero .kicker {
+    font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase;
+    color: #93a0d8; font-weight: 600; margin-bottom: 10px;
+  }
+  .hero .title-row { display: flex; align-items: center; gap: 22px; }
+  .hero h1 { font-size: 58px; letter-spacing: -0.03em; line-height: 1; font-weight: 800; }
+  .hero h1 .accent { color: #ffb59f; }
+  .hero .tagline { font-size: 19px; color: #dfe4fb; margin-top: 12px; font-weight: 300; }
+  .hero .tagline b { font-weight: 700; color: #fff; }
+  .hero .sub {
+    margin-top: 14px; font-size: 12px; color: #93a0d8; max-width: 5.6in; line-height: 1.55;
+  }
+
+  /* ------------------------------------------------------------ body */
+  .content { padding: 0.32in 0.6in 0; }
+  h2 {
+    font-size: 13px; color: #0a1856; text-transform: uppercase;
+    letter-spacing: 0.14em; margin: 0 0 10px; font-weight: 700;
+  }
+  .grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+  .feature {
+    background: #fff; border: 1px solid #e4e7f2; border-radius: 14px;
+    padding: 12px 14px;
+    box-shadow: 0 4px 14px -8px rgba(16, 24, 64, 0.18);
+  }
+  .feature .emoji { font-size: 20px; }
+  .feature h3 { font-size: 12.5px; margin: 5px 0 3px; color: #0a1856; }
+  .feature p { font-size: 10px; color: #656b7e; line-height: 1.45; }
+
+  .why { display: flex; gap: 12px; margin-top: 18px; }
+  .why-card {
+    flex: 1; border-radius: 14px; padding: 13px 15px;
+    background: linear-gradient(135deg, #fff5f0, #fff);
+    border: 1px solid #f3d5c6;
+  }
+  .why-card h3 { font-size: 12px; color: #d63c10; margin-bottom: 4px; }
+  .why-card p { font-size: 10px; color: #55402f; line-height: 1.5; }
+  .why-card.blue { background: linear-gradient(135deg, #eef1fd, #fff); border-color: #ccd5f3; }
+  .why-card.blue h3 { color: #1f3bb3; }
+  .why-card.blue p { color: #33406e; }
+
+  /* ------------------------------------------------------------- cta */
+  .cta {
+    margin: 0.3in 0.6in 0; background: #0a1856; border-radius: 18px;
+    color: #fff; padding: 20px 26px;
+    display: flex; align-items: center; gap: 22px;
+  }
+  .cta .qr { background: #fff; border-radius: 10px; padding: 6px; line-height: 0; }
+  .cta h2 { color: #ffb59f; letter-spacing: 0.14em; margin-bottom: 4px; }
+  .cta .url { font-size: 24px; font-weight: 800; letter-spacing: -0.01em; }
+  .cta p { font-size: 11px; color: #c4cdf3; margin-top: 5px; line-height: 1.5; }
+  .footer {
+    text-align: center; font-size: 9px; color: #8b91a5; padding: 12px 0;
+  }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="star" style="top:28px;left:340px;width:2px;height:2px;opacity:.8"></div>
+  <div class="star" style="top:70px;left:520px;width:3px;height:3px;opacity:.6"></div>
+  <div class="star" style="top:150px;left:640px;width:2px;height:2px;opacity:.7"></div>
+  <div class="star" style="top:40px;left:700px;width:2px;height:2px;opacity:.5"></div>
+  <div class="star" style="top:180px;left:420px;width:2px;height:2px;opacity:.5"></div>
+  <div class="kicker">Precision Space Systems Lab · University of Florida</div>
+  <div class="title-row">
+    <svg width="110" height="110" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="32" cy="32" r="31" fill="#ffffff" opacity="0.07"/>
+      <circle cx="14" cy="18" r="1.6" fill="#ffffff" opacity="0.8"/>
+      <circle cx="50" cy="13" r="1.2" fill="#ffffff" opacity="0.6"/>
+      <circle cx="53" cy="40" r="1.5" fill="#ffffff" opacity="0.55"/>
+      <path d="M25 51 Q32 63 39 51 Q35.5 55 32 54 Q28.5 55 25 51 Z" fill="#ffb020"/>
+      <path d="M28.5 52 Q32 59 35.5 52 Q32 54 28.5 52 Z" fill="#fa4616"/>
+      <path d="M32 7 L44.5 45.5 Q32 51.5 19.5 45.5 Z" fill="#f7c873"/>
+      <path d="M32 11.5 L42 43.5 Q32 48.5 22 43.5 Z" fill="#fa4616" opacity="0.92"/>
+      <path d="M19.5 45.5 Q32 51.5 44.5 45.5 L43 50 Q32 55.2 21 50 Z" fill="#e08a2e"/>
+      <circle cx="32" cy="23" r="3.4" fill="#ffe1b3"/>
+      <circle cx="32" cy="23" r="2.1" fill="#ffd08a"/>
+      <circle cx="27.5" cy="36" r="2.7" fill="#ffe1b3"/>
+      <circle cx="36.5" cy="36" r="2.7" fill="#ffe1b3"/>
+    </svg>
+    <div>
+      <h1>Lunch<span class="accent">Pad</span></h1>
+      <div class="tagline">Lab meetings, <b>lunch handled</b>. Every good mission starts on a launch pad.</div>
+    </div>
+  </div>
+  <p class="sub">
+    LunchPad is PSSL's home for lab-meeting food: one tap to RSVP, dietary needs counted
+    automatically, caterers chosen by vote, and the reimbursement paperwork generated for you.
+    Sign in with your PSSL account — nothing new to register.
+  </p>
+</div>
+
+<div class="content">
+  <h2>What it does</h2>
+  <div class="grid">
+    <div class="feature">
+      <div class="emoji">✅</div>
+      <h3>One-tap RSVP</h3>
+      <p>"I'm in" or "Can't make it" — on your phone or laptop. Changed plans? Update any time; late changes are simply flagged.</p>
+    </div>
+    <div class="feature">
+      <div class="emoji">🥗</div>
+      <h3>Your diet, remembered</h3>
+      <p>Set vegan, vegetarian, gluten-free, allergies… once in your profile. Every RSVP counts them into the order automatically.</p>
+    </div>
+    <div class="feature">
+      <div class="emoji">🍕</div>
+      <h3>Picky-eater friendly</h3>
+      <p>See the caterer for each meeting and attach a request — "please make sure there's a margarita pizza." It even remembers your usual.</p>
+    </div>
+    <div class="feature">
+      <div class="emoji">❤️</div>
+      <h3>Vote for caterers</h3>
+      <p>An approved caterer list the lab actually likes: vote for favorites and shape where next week's lunch comes from.</p>
+    </div>
+    <div class="feature">
+      <div class="emoji">🖨️</div>
+      <h3>Paperwork, automated</h3>
+      <p>Guests added in one click, and a printable sign-in sheet with signature lines for every meeting — reimbursement-ready.</p>
+    </div>
+    <div class="feature">
+      <div class="emoji">🤖</div>
+      <h3>Discord reminders</h3>
+      <p>Link your Discord once and the lab bot nudges you before each RSVP deadline. You can even reply with /rsvp right in the server.</p>
+    </div>
+  </div>
+
+  <div class="why">
+    <div class="why-card">
+      <h3>Why you'll use it</h3>
+      <p>Ten seconds a week. No more "does anyone here eat gluten?" threads, no forgotten
+      vegans, no missed lunches because you forgot to reply — the bot has your back.</p>
+    </div>
+    <div class="why-card blue">
+      <h3>Why the lab needs it</h3>
+      <p>Whoever orders sees exact headcounts and dietary breakdowns per meeting, and the
+      signed attendance sheet UF wants for food reimbursement prints itself.</p>
+    </div>
+  </div>
+</div>
+
+<div class="cta">
+  <div class="qr">
+    <img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&margin=0&color=0a1856&data=https%3A%2F%2Flunchpad.darkcosmos.org" width="96" height="96" alt="QR code">
+  </div>
+  <div>
+    <h2>Get started</h2>
+    <div class="url">lunchpad.darkcosmos.org</div>
+    <p>Sign in with your PSSL account → pick your food preferences once → tap "I'm in"
+    this Thursday. That's the whole onboarding.</p>
+  </div>
+</div>
+
+<div class="footer">PSSL LunchPad · Precision Space Systems Lab, University of Florida</div>
+
+</body>
+</html>

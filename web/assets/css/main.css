@@ -32,7 +32,12 @@ body {
 
 a { color: var(--blue); text-decoration: none; }
 
-.container { max-width: 880px; margin: 0 auto; padding: 0 16px 80px; }
+.container {
+  max-width: 880px; margin: 0 auto;
+  padding: 0 max(16px, env(safe-area-inset-left)) calc(80px + env(safe-area-inset-bottom));
+}
+
+.table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 
 h2.page-title { margin: 8px 0 14px; font-size: 24px; letter-spacing: -0.02em; }
 
@@ -40,18 +45,21 @@ h2.page-title { margin: 8px 0 14px; font-size: 24px; letter-spacing: -0.02em; }
 .site-header {
   background: linear-gradient(120deg, var(--navy) 0%, var(--navy-2) 55%, #26154f 100%);
   color: #fff;
-  padding: 0 16px;
+  padding: 0 max(16px, env(safe-area-inset-left));
   margin-bottom: 26px;
   box-shadow: 0 2px 16px rgba(10, 24, 86, 0.35);
+  position: sticky; top: 0; z-index: 50;
 }
 .site-header .inner {
   max-width: 880px; margin: 0 auto;
   display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
   min-height: 62px; padding: 8px 0;
 }
-.brand { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 19px; color: #fff; margin-right: 14px; letter-spacing: -0.01em; }
+.brand { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 19px; color: #fff; letter-spacing: -0.01em; }
 .brand .accent { color: var(--orange-soft); }
 .brand .sub { font-size: 11px; font-weight: 500; color: #93a0d8; display: block; line-height: 1; margin-top: 1px; letter-spacing: 0.08em; text-transform: uppercase; }
+
+.nav-area { display: flex; align-items: center; gap: 6px; flex: 1; margin-left: 14px; }
 .site-header nav { display: flex; gap: 2px; flex-wrap: wrap; }
 .site-header nav a {
   color: #c4cdf3; padding: 7px 13px; border-radius: 10px; font-size: 15px; font-weight: 500;
@@ -60,14 +68,43 @@ h2.page-title { margin: 8px 0 14px; font-size: 24px; letter-spacing: -0.02em; }
 .site-header nav a:hover { color: #fff; }
 .site-header nav a.router-link-active { color: #fff; background: rgba(255, 255, 255, 0.14); }
 .site-header .spacer { flex: 1; }
-.site-header .who { font-size: 13px; color: #c4cdf3; margin-right: 8px; }
+.site-header .who { font-size: 13px; color: #c4cdf3; margin-right: 8px; white-space: nowrap; }
+.site-header .who .role {
+  background: rgba(255, 181, 159, 0.18); color: var(--orange-soft);
+  border-radius: 999px; padding: 2px 9px; margin-left: 4px;
+  font-size: 11px; font-weight: 700; letter-spacing: 0.04em;
+}
 .site-header .btn { background: rgba(255, 255, 255, 0.1); border-color: rgba(255, 255, 255, 0.25); color: #fff; }
 .site-header .btn:hover { background: rgba(255, 255, 255, 0.2); }
 
-@media (max-width: 640px) {
-  .site-header .who { display: none; }
-  .site-header nav a { padding: 7px 10px; font-size: 14px; }
-  .brand .sub { display: none; }
+.hamburger {
+  display: none;
+  margin-left: auto;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1.5px solid rgba(255, 255, 255, 0.25);
+  color: #fff; border-radius: 10px;
+  font-size: 20px; line-height: 1;
+  padding: 8px 12px; cursor: pointer;
+  min-width: 44px; min-height: 44px;
+}
+
+@media (max-width: 720px) {
+  .hamburger { display: block; }
+  .nav-area {
+    display: none;
+    flex-direction: column; align-items: stretch;
+    flex-basis: 100%; margin: 4px 0 10px;
+    gap: 8px;
+  }
+  .nav-area.open { display: flex; }
+  .site-header nav { flex-direction: column; gap: 2px; }
+  .site-header nav a {
+    padding: 13px 14px; font-size: 16px;
+    border-radius: 10px;
+  }
+  .site-header .spacer { display: none; }
+  .site-header .who { margin: 4px 0 0 14px; }
+  .nav-area .btn { min-height: 44px; }
 }
 
 /* ----------------------------------------------------------------- cards */
@@ -180,3 +217,69 @@ table.plain tr:last-child td { border-bottom: none; }
 }
 .login-card h1 { margin: 14px 0 2px; font-size: 30px; letter-spacing: -0.02em; }
 .login-card .tagline { color: var(--muted); font-size: 14px; margin: 0 0 18px; }
+
+/* ------------------------------------------------------------------ tabs */
+.tabs { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 18px; }
+.tab-btn {
+  border: 1.5px solid var(--border); background: #fff;
+  border-radius: 999px; padding: 9px 16px;
+  font-size: 14px; font-weight: 600; color: var(--muted);
+  cursor: pointer; transition: all 0.13s; touch-action: manipulation;
+}
+.tab-btn:hover { border-color: var(--blue); color: var(--text); }
+.tab-btn.active { background: var(--navy); border-color: var(--navy); color: #fff; }
+
+/* ---------------------------------------------------------------- dialog */
+.dialog-overlay {
+  position: fixed; inset: 0; z-index: 100;
+  background: rgba(10, 24, 86, 0.4);
+  backdrop-filter: blur(3px);
+  display: flex; align-items: center; justify-content: center;
+  padding: 16px;
+}
+.dialog-card {
+  background: #fff; border-radius: 18px;
+  padding: 22px 24px; width: 100%; max-width: 400px;
+  box-shadow: 0 24px 60px -18px rgba(0, 0, 0, 0.45);
+}
+.dialog-card h3 { margin: 0 0 8px; font-size: 17px; color: var(--navy); }
+.dialog-card p { margin: 0 0 18px; font-size: 14.5px; color: #3c4257; white-space: pre-line; line-height: 1.55; }
+.dialog-actions { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
+
+.dialog-fade-enter-active, .dialog-fade-leave-active { transition: opacity 0.15s; }
+.dialog-fade-enter-active .dialog-card, .dialog-fade-leave-active .dialog-card { transition: transform 0.15s; }
+.dialog-fade-enter-from, .dialog-fade-leave-to { opacity: 0; }
+.dialog-fade-enter-from .dialog-card, .dialog-fade-leave-to .dialog-card { transform: scale(0.95); }
+
+/* ------------------------------------------------- small screens (<640px) */
+@media (max-width: 640px) {
+  .container { padding-left: 12px; padding-right: 12px; }
+  .card { padding: 16px 14px; border-radius: 14px; }
+  .card h2 { font-size: 18px; }
+  h2.page-title { font-size: 20px; }
+
+  /* 16px+ inputs stop iOS Safari from zooming in on focus */
+  input[type='text'], input[type='url'], input[type='date'], input[type='time'],
+  input[type='number'], input[type='datetime-local'], textarea, select {
+    font-size: 16px;
+    width: 100%;
+  }
+  /* form fields stack full-width instead of squeezing side by side */
+  label.field { flex: 1 1 100%; }
+  .row > input, .row > select { flex: 1 1 100%; }
+  .row > .btn.sm { flex: 0 0 auto; }
+
+  /* comfortable tap targets */
+  .btn { min-height: 44px; }
+  .chip { padding: 10px 16px; }
+
+  /* two-column sections (e.g. meeting responses) stack */
+  .row.top > .grow { flex-basis: 100%; }
+
+  table.plain { font-size: 13px; }
+  .login-card { padding: 32px 22px; }
+}
+
+@media (max-width: 400px) {
+  .rsvp-row { flex-direction: column; align-items: stretch; }
+}

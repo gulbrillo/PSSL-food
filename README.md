@@ -42,10 +42,17 @@ Lab meeting RSVP & food coordination for the Precision Space Systems Lab.
 
 ### Step 1 — WordPress plugin (one time)
 
-1. Copy `wordpress-plugin/pssl-sso/` into `wp-content/plugins/` of the network.
-2. Activate **PSSL SSO Provider** on the **PSSL site only** (not network-wide).
+1. Install `wordpress-plugin/pssl-sso.zip` — on a multisite network go to
+   **Network Admin → Plugins → Add New → Upload Plugin** and upload the zip
+   (alternatively, copy the `wordpress-plugin/pssl-sso/` folder into
+   `wp-content/plugins/` by SFTP).
+2. Activate **PSSL SSO Provider** on the **PSSL site only** (site's own
+   Plugins page — do *not* "Network Activate").
 3. Open **Settings → PSSL SSO**: note the **Client ID** and **Client Secret**, and add the
    food app's redirect URI (`<your app URL>/auth/wp/callback`) to the allowed list.
+4. Optional but recommended if the site uses a Google/UF-SSO login plugin: under
+   **Login behavior**, tick *"Send users … straight to the Google / UF SSO sign-in"* —
+   members then never see the WordPress username/password page.
 
 When someone clicks "Sign in with your PSSL account", they're sent to the PSSL site; if they
 aren't logged in there, the site's existing UF/Google SSO kicks in first, then they bounce
@@ -74,17 +81,50 @@ git clone https://github.com/<you>/PSSL-food.git && cd PSSL-food
 
 The installer asks, interactively:
 
-
-- **Web port** — which host port the app is published on (default `8080`)
-- whether to use the **bundled Caddy** for HTTPS on 80/443 (say *no* if the server already
-  has a reverse proxy — then just point your proxy at the chosen port)
-- the **public URL** of the app
+- **How the app is reached** — `1)` behind **Apache** on the same server (recommended,
+  see below), `2)` the bundled Caddy container serving HTTPS itself, or `3)` a plain
+  HTTP port for testing
+- the **web port** the app listens on (default `8080`; with option 1 it binds to
+  `127.0.0.1` only, so it's unreachable except through Apache)
+- the app's **public domain / URL**
 - **WordPress** base URL + client ID/secret (from Step 1), admin emails
 - **Discord** credentials (optional)
 
-It generates all internal secrets itself, writes `.env`, and runs
-`docker compose up -d --build`. The database schema is created/updated automatically at
-container start.
+It generates all internal secrets itself, writes `.env`, runs
+`docker compose up -d --build` (the database schema is created/updated automatically at
+container start) — and, for option 1, **prints a ready-to-paste Apache vhost** and saves it
+as `apache-vhost-<domain>.conf`.
+
+### Behind Apache (recommended)
+
+Add a vhost on the server's Apache that proxies to the app port — the installer generates
+exactly this with your domain and port filled in:
+
+```apache
+# sudo a2enmod proxy proxy_http headers ssl    (Debian/Ubuntu)
+<VirtualHost *:443>
+    ServerName food.pssl.mae.ufl.edu
+
+    SSLEngine on
+    SSLCertificateFile      /etc/ssl/certs/food.pssl.mae.ufl.edu.crt
+    SSLCertificateKeyFile   /etc/ssl/private/food.pssl.mae.ufl.edu.key
+
+    ProxyPreserveHost On
+    ProxyPass        / http://127.0.0.1:8080/
+    ProxyPassReverse / http://127.0.0.1:8080/
+
+    RequestHeader set X-Forwarded-Proto "https"
+    RequestHeader set X-Forwarded-Port  "443"
+</VirtualHost>
+
+<VirtualHost *:80>
+    ServerName food.pssl.mae.ufl.edu
+    Redirect permanent / https://food.pssl.mae.ufl.edu/
+</VirtualHost>
+```
+
+Adjust the certificate paths to your setup, reload Apache, done. `ProxyPreserveHost` and the
+`X-Forwarded-*` headers matter — the app uses them to build correct login redirects.
 
 ## Update
 

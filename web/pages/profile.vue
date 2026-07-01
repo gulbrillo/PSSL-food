@@ -6,6 +6,7 @@ const { data: restrictions, refresh: refreshRestrictions } = await useFetch('/ap
 const customName = ref('')
 const saving = ref(false)
 const lateNote = ref(0)
+const showGuide = ref(false)
 
 const notice = computed(() => {
   if (route.query.linked) return { ok: true, text: 'Discord account linked! The bot can now remind you personally.' }
@@ -69,6 +70,7 @@ async function unlinkDiscord() {
           :key="r.id"
           class="chip"
           :class="{ active: isSelected(r.id) }"
+          :title="r.description || ''"
           @click="toggle(r.id)"
         >
           {{ r.name }}
@@ -85,9 +87,27 @@ async function unlinkDiscord() {
         <button class="btn sm" :disabled="!customName.trim()" @click="addCustom">Add</button>
       </div>
       <p v-if="lateNote" class="late-text mt">
-        * Heads-up: the RSVP deadline for {{ lateNote }} upcoming meeting{{ lateNote > 1 ? 's' : '' }}
-        already passed, so your change was flagged as late there. It still counts!
+        Heads-up: the RSVP deadline for {{ lateNote }} upcoming meeting{{ lateNote > 1 ? 's' : '' }}
+        has already passed, so the food may already be ordered. We've noted your update and will
+        do our best to accommodate it — it just carries a small * for whoever is ordering.
       </p>
+
+      <div class="mt">
+        <button class="btn sm ghost" @click="showGuide = !showGuide">
+          ℹ️ {{ showGuide ? 'Hide the guide' : 'What do these diets mean?' }}
+        </button>
+      </div>
+
+      <div v-if="showGuide" class="mt">
+        <hr class="divider" />
+        <div v-for="r in restrictions" :key="r.id" style="margin-bottom: 12px">
+          <strong>{{ r.name }}</strong>
+          <span v-if="isSelected(r.id)" class="pill ok" style="margin-left: 6px">yours</span>
+          <p class="muted small" style="margin: 2px 0 0">
+            {{ r.description || 'No description yet — an admin can add one in the admin area.' }}
+          </p>
+        </div>
+      </div>
     </div>
 
     <div class="card">

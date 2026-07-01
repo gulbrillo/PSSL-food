@@ -1,5 +1,10 @@
 <script setup lang="ts">
 const { loggedIn, user, clear } = useUserSession()
+const route = useRoute()
+const menuOpen = ref(false)
+
+// close the mobile menu on navigation
+watch(() => route.fullPath, () => (menuOpen.value = false))
 
 async function signOut() {
   await $fetch('/api/auth/logout', { method: 'POST' })
@@ -19,19 +24,36 @@ async function signOut() {
             <span class="sub">PSSL · Lab Meeting RSVP</span>
           </span>
         </NuxtLink>
-        <nav>
-          <NuxtLink to="/">Meetings</NuxtLink>
-          <NuxtLink to="/caterers">Caterers</NuxtLink>
-          <NuxtLink to="/profile">Profile</NuxtLink>
-          <NuxtLink v-if="(user as any)?.isAdmin" to="/admin">Admin</NuxtLink>
-        </nav>
-        <span class="spacer" />
-        <span class="who">{{ (user as any)?.name }}</span>
-        <button class="btn sm" @click="signOut">Sign out</button>
+
+        <button
+          class="hamburger"
+          :aria-expanded="menuOpen"
+          aria-label="Toggle menu"
+          @click="menuOpen = !menuOpen"
+        >
+          <span v-if="!menuOpen">☰</span>
+          <span v-else>✕</span>
+        </button>
+
+        <div class="nav-area" :class="{ open: menuOpen }">
+          <nav>
+            <NuxtLink to="/">Meetings</NuxtLink>
+            <NuxtLink to="/caterers">Caterers</NuxtLink>
+            <NuxtLink to="/profile">Profile</NuxtLink>
+            <NuxtLink v-if="(user as any)?.isAdmin" to="/admin">Admin</NuxtLink>
+          </nav>
+          <span class="spacer" />
+          <span class="who">
+            {{ (user as any)?.name }}
+            <span v-if="(user as any)?.isAdmin" class="role">admin</span>
+          </span>
+          <button class="btn sm" @click="signOut">Sign out</button>
+        </div>
       </div>
     </header>
     <main class="container">
       <slot />
     </main>
+    <AppDialog />
   </div>
 </template>

@@ -25,9 +25,10 @@ model User {
 }
 
 model Restriction {
-  id    String            @id @default(cuid())
-  name  String            @unique
-  users UserRestriction[]
+  id          String            @id @default(cuid())
+  name        String            @unique
+  description String? // what's excluded + common traps; shown as tooltip and in the admin overview
+  users       UserRestriction[]
 }
 
 model UserRestriction {
@@ -74,7 +75,7 @@ model CatererPreference {
 
 model Meeting {
   id           String        @id @default(cuid())
-  title        String        @default("Lab Meeting")
+  title        String        @default("PSSL Group Meeting")
   date         DateTime
   rsvpDeadline DateTime
   status       String        @default("scheduled") // scheduled | cancelled
