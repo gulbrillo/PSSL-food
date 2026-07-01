@@ -47,7 +47,8 @@ async function checkReminders(client) {
   try {
     data = await api('/api/internal/upcoming')
   } catch (e) {
-    console.error('Could not fetch upcoming meetings:', e.message)
+    const cause = e.cause?.code || e.cause?.message || ''
+    console.error('Could not fetch upcoming meetings:', e.message, cause)
     return
   }
 

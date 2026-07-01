@@ -4,8 +4,19 @@ interface WpUserinfo {
   sub: number
   email: string
   name: string
+  first_name?: string
+  last_name?: string
   username: string
   roles: string[]
+}
+
+/** Prefer a human name: WP display_name, unless it's empty or just the login
+ *  name (e.g. "admin"), in which case fall back to first/last name. */
+function pickName(u: WpUserinfo) {
+  const display = (u.name || '').trim()
+  const full = [u.first_name, u.last_name].map((s) => (s || '').trim()).filter(Boolean).join(' ')
+  const generic = !display || display.toLowerCase() === (u.username || '').toLowerCase()
+  return (generic ? full || display : display) || u.username || u.email
 }
 
 export default defineEventHandler(async (event) => {
@@ -48,18 +59,19 @@ export default defineEventHandler(async (event) => {
     userinfo.roles.some((r) => ['administrator', 'editor'].includes(r)) ||
     adminEmails.includes(userinfo.email.toLowerCase())
 
+  const name = pickName(userinfo)
   const user = await db.user.upsert({
     where: { wpId: userinfo.sub },
     create: {
       wpId: userinfo.sub,
       email: userinfo.email,
-      name: userinfo.name || userinfo.username,
+      name,
       username: userinfo.username,
       isAdmin
     },
     update: {
       email: userinfo.email,
-      name: userinfo.name || userinfo.username,
+      name,
       username: userinfo.username,
       isAdmin
     }
