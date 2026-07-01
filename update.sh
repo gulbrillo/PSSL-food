@@ -30,6 +30,10 @@ main() {
   echo "→ Cleaning up old images ..."
   docker image prune -f >/dev/null
 
+  # belt-and-suspenders: keep the scripts runnable even if a future commit
+  # from Windows loses the executable bit again
+  chmod +x install.sh update.sh 2>/dev/null || true
+
   echo "✅ Update complete."
   docker compose ps
 }
