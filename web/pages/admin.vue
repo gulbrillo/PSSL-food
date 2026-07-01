@@ -45,10 +45,13 @@ const seriesPreview = computed(() => {
   for (let i = 0; i < Math.min(Math.max(series.weeks, 1), 26); i++) {
     const date = new Date(`${series.firstDate}T${series.time}`)
     date.setDate(date.getDate() + 7 * i)
-    const deadline = new Date(date)
+    let deadline = new Date(date)
     deadline.setDate(deadline.getDate() - series.deadlineDaysBefore)
     const [h, min] = series.deadlineTime.split(':').map(Number)
     deadline.setHours(h || 17, min || 0, 0, 0)
+    // deadline already in the past (meeting created on short notice):
+    // keep RSVPs open until the meeting starts
+    if (deadline < new Date()) deadline = new Date(date)
     out.push({ date, deadline })
   }
   return out
@@ -424,8 +427,36 @@ async function saveRestriction(r: any) {
     <!-- ============================================= settings -->
     <div v-else-if="tab === 'settings'" class="card">
       <h3>⚙️ Settings</h3>
-      <h3 class="mt" style="font-size: 14px">Discord bot</h3>
-      <label style="display: flex; gap: 10px; align-items: flex-start; cursor: pointer">
+      <h3 class="mt" style="font-size: 14px">Discord reminders</h3>
+
+      <div class="row mt">
+        <label class="field">Channel reminder (hours before RSVP deadline)
+          <input
+            type="number"
+            min="1"
+            max="336"
+            style="width: 110px"
+            :value="settings?.channelReminderHours"
+            @change="saveSettings({ channelReminderHours: Number(($event.target as HTMLInputElement).value) })"
+          />
+        </label>
+        <label class="field">DM reminder (hours before RSVP deadline)
+          <input
+            type="number"
+            min="1"
+            max="336"
+            style="width: 110px"
+            :value="settings?.dmReminderHours"
+            @change="saveSettings({ dmReminderHours: Number(($event.target as HTMLInputElement).value) })"
+          />
+        </label>
+      </div>
+      <p class="muted small">
+        If a meeting is created closer to its RSVP deadline than these windows, the channel
+        reminder goes out right away (bot checks every ~5 minutes).
+      </p>
+
+      <label class="mt" style="display: flex; gap: 10px; align-items: flex-start; cursor: pointer">
         <input
           type="checkbox"
           style="margin-top: 4px"
@@ -435,12 +466,12 @@ async function saveRestriction(r: any) {
         <span>
           Send personal <strong>DM reminders</strong> to members who haven't RSVP'd
           <span class="muted small">
-            (sent shortly before the deadline — default 24 h — to members with linked Discord
-            accounts; the channel reminder is always posted regardless of this setting)
+            (to members with linked Discord accounts; the channel reminder is always posted
+            regardless of this setting)
           </span>
         </span>
       </label>
-      <p class="muted small mt">Changes take effect on the bot's next check (within ~10 minutes).</p>
+      <p class="muted small mt">Changes take effect on the bot's next check (within ~5 minutes).</p>
     </div>
 
     <!-- ============================================= dietary restrictions -->

@@ -161,12 +161,16 @@ ones, assigns caterer + menu notes, and manages the caterer list.
 Admins can also push a reminder manually at any time: **Admin → Upcoming meetings →
 📣 Discord reminder** posts an RSVP call for that meeting to the channel immediately.
 
-Automatic reminders are checked every 10 minutes; each fires once per meeting:
+Reminder timing is configured in the web app under **Admin → Settings** (not in `.env`).
+Automatic reminders are checked every ~5 minutes; each fires once per meeting:
 
-| When (before RSVP deadline)      | What                                                        |
-| -------------------------------- | ----------------------------------------------------------- |
-| `CHANNEL_REMINDER_HOURS` (48 h)  | Post in the configured channel with meeting/caterer/count   |
-| `DM_REMINDER_HOURS` (24 h)       | DM every linked member who hasn't responded — **off by default**, admins enable it in the web app under *Admin → Settings* |
+| When (before RSVP deadline)  | What                                                        |
+| ---------------------------- | ----------------------------------------------------------- |
+| Channel reminder (default 48 h) | Post in the configured channel with meeting/caterer/count and RSVP buttons |
+| DM reminder (default 24 h)   | DM every linked member who hasn't responded — **off by default**, toggle in Admin → Settings |
+
+Meetings created on short notice (inside the reminder window) get their channel
+announcement right away, and their RSVP deadline stays open until the meeting starts.
 
 ## Local development
 

@@ -7,6 +7,8 @@ export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig(event)
   const now = new Date()
   const dmReminders = (await getSetting('dmReminders', 'false')) === 'true'
+  const channelReminderHours = parseInt(await getSetting('channelReminderHours', '48'), 10) || 48
+  const dmReminderHours = parseInt(await getSetting('dmReminderHours', '24'), 10) || 24
 
   const [meetings, totalMembers] = await Promise.all([
     db.meeting.findMany({
@@ -25,6 +27,8 @@ export default defineEventHandler(async (event) => {
   return {
     appUrl: config.public.appUrl,
     dmReminders,
+    channelReminderHours,
+    dmReminderHours,
     totalMembers,
     meetings: meetings.map((m) => {
       const respondedIds = new Set(m.rsvps.map((r) => r.userId))

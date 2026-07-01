@@ -58,8 +58,6 @@ services:
       WEB_API_URL: http://web:3000
       PUBLIC_APP_URL: ${APP_URL}
       BOT_API_TOKEN: ${BOT_API_TOKEN}
-      CHANNEL_REMINDER_HOURS: ${CHANNEL_REMINDER_HOURS:-48}
-      DM_REMINDER_HOURS: ${DM_REMINDER_HOURS:-24}
       TZ: America/New_York
 
   # Optional HTTPS front (enable with COMPOSE_PROFILES=caddy in .env).

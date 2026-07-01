@@ -21,7 +21,7 @@ const {
   DM_REMINDER_HOURS = '24'
 } = process.env
 
-const CHECK_INTERVAL_MS = 10 * 60 * 1000
+const CHECK_INTERVAL_MS = 5 * 60 * 1000
 
 async function api(path, options = {}) {
   const res = await fetch(`${WEB_API_URL}${path}`, {
@@ -100,13 +100,18 @@ async function checkReminders(client) {
     return
   }
 
+  // live values from Admin → Settings, env vars are only the fallback
+  const channelHours = Number(data.channelReminderHours ?? CHANNEL_REMINDER_HOURS)
+  const dmHours = Number(data.dmReminderHours ?? DM_REMINDER_HOURS)
+
   const now = Date.now()
   for (const m of data.meetings) {
     const hoursToDeadline = (new Date(m.rsvpDeadline).getTime() - now) / 3600_000
-    if (hoursToDeadline <= 0) continue
+    const deadlineFuture = hoursToDeadline > 0
 
-    // 1) channel reminder
-    if (hoursToDeadline <= Number(CHANNEL_REMINDER_HOURS) && !m.remindersSent.includes('channel')) {
+    // 1) channel reminder — also fires immediately for meetings created inside
+    //    the reminder window (even if their RSVP deadline has already passed)
+    if (hoursToDeadline <= channelHours && !m.remindersSent.includes('channel')) {
       try {
         const channel = await client.channels.fetch(DISCORD_CHANNEL_ID)
         const embed = new EmbedBuilder()
@@ -115,7 +120,9 @@ async function checkReminders(client) {
           .setDescription(
             [
               `**When:** ${ts(m.date)}`,
-              `**RSVP by:** ${ts(m.rsvpDeadline)} (${ts(m.rsvpDeadline, 'R')})`,
+              deadlineFuture
+                ? `**RSVP by:** ${ts(m.rsvpDeadline)} (${ts(m.rsvpDeadline, 'R')})`
+                : `**RSVP deadline has passed** — late responses are still welcome!`,
               m.catererName ? `**Caterer:** ${m.catererName}` : '**Caterer:** TBA',
               m.menuNotes ? `**Menu:** ${m.menuNotes}` : null,
               '',
@@ -136,8 +143,9 @@ async function checkReminders(client) {
     }
 
     // 2) DM the linked members who still haven't responded
-    //    (only if the admins enabled DM reminders in the web app — off by default)
-    if (data.dmReminders && hoursToDeadline <= Number(DM_REMINDER_HOURS) && !m.remindersSent.includes('dm')) {
+    //    (only if the admins enabled DM reminders in the web app — off by default;
+    //    never after the deadline, nagging late is just annoying)
+    if (data.dmReminders && deadlineFuture && hoursToDeadline <= dmHours && !m.remindersSent.includes('dm')) {
       for (const discordId of m.nonResponderDiscordIds) {
         try {
           const dmUser = await client.users.fetch(discordId)
