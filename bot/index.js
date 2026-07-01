@@ -87,7 +87,8 @@ async function checkReminders(client) {
     }
 
     // 2) DM the linked members who still haven't responded
-    if (hoursToDeadline <= Number(DM_REMINDER_HOURS) && !m.remindersSent.includes('dm')) {
+    //    (only if the admins enabled DM reminders in the web app — off by default)
+    if (data.dmReminders && hoursToDeadline <= Number(DM_REMINDER_HOURS) && !m.remindersSent.includes('dm')) {
       for (const discordId of m.nonResponderDiscordIds) {
         try {
           const dmUser = await client.users.fetch(discordId)
@@ -190,7 +191,7 @@ async function handleInteraction(interaction) {
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds] })
 
-client.once('ready', async () => {
+client.once('clientReady', async () => {
   console.log(`Logged in as ${client.user.tag}`)
   try {
     const rest = new REST().setToken(DISCORD_BOT_TOKEN)

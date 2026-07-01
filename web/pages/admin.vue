@@ -2,7 +2,7 @@
 const { user } = useUserSession()
 if (!(user.value as any)?.isAdmin) await navigateTo('/')
 
-const tab = ref<'meetings' | 'schedule' | 'caterers' | 'members' | 'restrictions'>('meetings')
+const tab = ref<'meetings' | 'schedule' | 'caterers' | 'members' | 'restrictions' | 'settings'>('meetings')
 const dialog = useDialog()
 
 const { data: meetings, refresh: refreshMeetings } = await useFetch('/api/meetings', {
@@ -13,6 +13,12 @@ const { data: caterers, refresh: refreshCaterers } = await useFetch('/api/catere
 })
 const { data: members } = useFetch('/api/admin/members')
 const { data: restrictions, refresh: refreshRestrictions } = useFetch('/api/restrictions')
+const { data: settings, refresh: refreshSettings } = useFetch('/api/admin/settings')
+
+async function saveSettings(patch: Record<string, boolean>) {
+  await $fetch('/api/admin/settings', { method: 'PUT', body: patch })
+  await refreshSettings()
+}
 
 /* ---------- schedule a series (default: Thursdays 1pm, RSVP by Tuesday 5pm) ---------- */
 
@@ -165,6 +171,9 @@ async function saveRestriction(r: any) {
       </button>
       <button class="tab-btn" :class="{ active: tab === 'restrictions' }" @click="tab = 'restrictions'">
         🥗 Dietary restrictions
+      </button>
+      <button class="tab-btn" :class="{ active: tab === 'settings' }" @click="tab = 'settings'">
+        ⚙️ Settings
       </button>
     </div>
 
@@ -347,6 +356,28 @@ async function saveRestriction(r: any) {
           </tr>
         </table>
       </div>
+    </div>
+
+    <!-- ============================================= settings -->
+    <div v-else-if="tab === 'settings'" class="card">
+      <h3>⚙️ Settings</h3>
+      <h3 class="mt" style="font-size: 14px">Discord bot</h3>
+      <label style="display: flex; gap: 10px; align-items: flex-start; cursor: pointer">
+        <input
+          type="checkbox"
+          style="margin-top: 4px"
+          :checked="settings?.dmReminders"
+          @change="saveSettings({ dmReminders: ($event.target as HTMLInputElement).checked })"
+        />
+        <span>
+          Send personal <strong>DM reminders</strong> to members who haven't RSVP'd
+          <span class="muted small">
+            (sent shortly before the deadline — default 24 h — to members with linked Discord
+            accounts; the channel reminder is always posted regardless of this setting)
+          </span>
+        </span>
+      </label>
+      <p class="muted small mt">Changes take effect on the bot's next check (within ~10 minutes).</p>
     </div>
 
     <!-- ============================================= dietary restrictions -->

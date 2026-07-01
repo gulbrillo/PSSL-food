@@ -4,6 +4,21 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
+# A deployment copy should be pristine — local edits (often just a stray
+# chmod or a line-ending change) block git pull, so offer to discard them.
+if ! git diff --quiet || ! git diff --cached --quiet; then
+  echo "⚠ This copy has local changes that would block the update:"
+  git status --short
+  read -r -p "Discard these local changes and continue? (y/N) " REPLY
+  if [ "$REPLY" = "y" ] || [ "$REPLY" = "Y" ]; then
+    git checkout -- .
+    git reset -q
+  else
+    echo "Aborted. Commit/stash your changes, then run ./update.sh again."
+    exit 1
+  fi
+fi
+
 echo "→ Pulling latest source ..."
 git pull --ff-only
 

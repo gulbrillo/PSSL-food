@@ -123,6 +123,11 @@ model Guest {
   meeting      Meeting  @relation(fields: [meetingId], references: [id], onDelete: Cascade)
 }
 
+model AppSetting {
+  key   String @id
+  value String
+}
+
 model ReminderLog {
   meetingId String
   kind      String // channel | dm

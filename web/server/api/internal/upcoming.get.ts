@@ -1,10 +1,12 @@
 import { db } from '../../utils/db'
 import { requireBot } from '../../utils/auth'
+import { getSetting } from '../../utils/settings'
 
 export default defineEventHandler(async (event) => {
   requireBot(event)
   const config = useRuntimeConfig(event)
   const now = new Date()
+  const dmReminders = (await getSetting('dmReminders', 'false')) === 'true'
 
   const [meetings, totalMembers] = await Promise.all([
     db.meeting.findMany({
@@ -22,6 +24,7 @@ export default defineEventHandler(async (event) => {
 
   return {
     appUrl: config.public.appUrl,
+    dmReminders,
     totalMembers,
     meetings: meetings.map((m) => {
       const respondedIds = new Set(m.rsvps.map((r) => r.userId))

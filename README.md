@@ -163,7 +163,7 @@ Checked every 10 minutes; each fires once per meeting:
 | When (before RSVP deadline)      | What                                                        |
 | -------------------------------- | ----------------------------------------------------------- |
 | `CHANNEL_REMINDER_HOURS` (48 h)  | Post in the configured channel with meeting/caterer/count   |
-| `DM_REMINDER_HOURS` (24 h)       | DM every linked member who hasn't responded                 |
+| `DM_REMINDER_HOURS` (24 h)       | DM every linked member who hasn't responded — **off by default**, admins enable it in the web app under *Admin → Settings* |
 
 ## Local development
 

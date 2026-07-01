@@ -36,12 +36,19 @@ services:
       NUXT_BOT_API_TOKEN: ${BOT_API_TOKEN}
       NUXT_ADMIN_EMAILS: ${ADMIN_EMAILS}
       TZ: America/New_York
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:3000/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
 
   bot:
     build: ./bot
     restart: unless-stopped
     depends_on:
-      - web
+      web:
+        condition: service_healthy
     environment:
       DISCORD_BOT_TOKEN: ${DISCORD_BOT_TOKEN}
       DISCORD_GUILD_ID: ${DISCORD_GUILD_ID}
