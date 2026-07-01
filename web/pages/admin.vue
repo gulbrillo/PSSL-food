@@ -136,8 +136,12 @@ async function addCaterer() {
   Object.assign(newCaterer, { name: '', cuisine: '', url: '', notes: '' })
   await refreshCaterers()
 }
-async function toggleCatererActive(c: any) {
-  await $fetch(`/api/caterers/${c.id}`, { method: 'PATCH', body: { active: !c.active } })
+async function patchCaterer(id: string, data: Record<string, any>) {
+  try {
+    await $fetch(`/api/caterers/${id}`, { method: 'PATCH', body: data })
+  } catch (e: any) {
+    dialog.notify(e.data?.statusMessage || 'Could not save — please try again.', 'Something went wrong')
+  }
   await refreshCaterers()
 }
 
@@ -340,18 +344,52 @@ async function saveRestriction(r: any) {
         <input v-model="newCaterer.url" type="url" placeholder="Menu URL" class="grow" />
         <button class="btn primary sm" :disabled="!newCaterer.name.trim()" @click="addCaterer">Add</button>
       </div>
-      <div class="table-scroll mt">
-        <table class="plain">
-          <tr v-for="c in caterers" :key="c.id">
-            <td><strong>{{ c.name }}</strong> <span class="muted small">{{ c.cuisine }}</span></td>
-            <td>❤️ {{ c.voteCount }}</td>
-            <td><span class="pill" :class="c.active ? 'ok' : 'bad'">{{ c.active ? 'active' : 'inactive' }}</span></td>
-            <td><button class="btn sm" @click="toggleCatererActive(c)">{{ c.active ? 'Deactivate' : 'Activate' }}</button></td>
-          </tr>
-        </table>
+      <div v-for="c in caterers" :key="c.id">
+        <hr class="divider" />
+        <div class="row">
+          <label class="field">Name
+            <input
+              type="text"
+              maxlength="80"
+              :value="c.name"
+              @change="patchCaterer(c.id, { name: ($event.target as HTMLInputElement).value })"
+            />
+          </label>
+          <label class="field">Cuisine
+            <input
+              type="text"
+              maxlength="60"
+              :value="c.cuisine || ''"
+              @change="patchCaterer(c.id, { cuisine: ($event.target as HTMLInputElement).value })"
+            />
+          </label>
+          <label class="field grow">Menu URL
+            <input
+              type="url"
+              :value="c.url || ''"
+              @change="patchCaterer(c.id, { url: ($event.target as HTMLInputElement).value })"
+            />
+          </label>
+        </div>
+        <div class="row mt">
+          <label class="field grow">Notes
+            <input
+              type="text"
+              maxlength="200"
+              :value="c.notes || ''"
+              @change="patchCaterer(c.id, { notes: ($event.target as HTMLInputElement).value })"
+            />
+          </label>
+          <span class="pill">❤️ {{ c.voteCount }}</span>
+          <span class="pill" :class="c.active ? 'ok' : 'bad'">{{ c.active ? 'active' : 'inactive' }}</span>
+          <button class="btn sm" @click="patchCaterer(c.id, { active: !c.active })">
+            {{ c.active ? 'Deactivate' : 'Activate' }}
+          </button>
+        </div>
       </div>
       <p class="muted small mt">
-        Deactivated caterers disappear from the voting page but stay assignable to past meetings.
+        Changes save automatically when you leave a field. Deactivated caterers disappear from
+        the voting page but stay assignable to meetings.
       </p>
     </div>
 

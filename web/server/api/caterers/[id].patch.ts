@@ -7,11 +7,22 @@ export default defineEventHandler(async (event) => {
   const body = await readBody<{ name?: string; cuisine?: string; url?: string; notes?: string; active?: boolean }>(event)
 
   const data: any = {}
-  if (body.name?.trim()) data.name = body.name.trim()
+  if ('name' in body) {
+    const name = (body.name || '').trim()
+    if (!name) throw createError({ statusCode: 400, statusMessage: 'Caterer name cannot be empty' })
+    data.name = name
+  }
   if ('cuisine' in body) data.cuisine = body.cuisine?.trim() || null
   if ('url' in body) data.url = body.url?.trim() || null
   if ('notes' in body) data.notes = body.notes?.trim() || null
   if (typeof body.active === 'boolean') data.active = body.active
 
-  return db.caterer.update({ where: { id }, data })
+  try {
+    return await db.caterer.update({ where: { id }, data })
+  } catch (e: any) {
+    if (e?.code === 'P2002') {
+      throw createError({ statusCode: 400, statusMessage: 'A caterer with that name already exists' })
+    }
+    throw e
+  }
 })
