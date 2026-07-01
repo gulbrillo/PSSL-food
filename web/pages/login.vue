@@ -12,13 +12,11 @@ const error = computed(() => {
 <template>
   <div class="login-wrap">
     <div class="login-card">
-      <div style="font-size: 44px">🍕</div>
-      <h1>PSSL Food</h1>
-      <p class="muted">
-        Lab meeting RSVPs &amp; food preferences for the Precision Space Systems Lab.
-      </p>
+      <AppLogo :size="84" />
+      <h1>LunchPad</h1>
+      <p class="tagline">Lab meeting RSVP &amp; catering · Precision Space Systems Lab 🚀</p>
       <p v-if="error" class="error-text">{{ error }}</p>
-      <a class="btn primary" style="width: 100%; justify-content: center; padding: 12px" href="/auth/wp">
+      <a class="btn primary" style="width: 100%; padding: 14px" href="/auth/wp">
         Sign in with your PSSL account
       </a>
       <p class="muted small mt">

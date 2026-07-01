@@ -5,6 +5,7 @@ const { data: me } = await useFetch('/api/me')
 const requestDrafts = reactive<Record<string, string>>({})
 const saveAsUsual = reactive<Record<string, boolean>>({})
 const savedNote = ref('')
+const showResponses = ref('')
 
 watchEffect(() => {
   for (const m of meetings.value || []) {
@@ -12,9 +13,19 @@ watchEffect(() => {
   }
 })
 
-const upcoming = computed(() => (meetings.value || []).filter((m: any) => new Date(m.date) > new Date(Date.now() - 4 * 3600_000)))
+const upcoming = computed(() =>
+  (meetings.value || []).filter((m: any) => new Date(m.date) > new Date(Date.now() - 4 * 3600_000))
+)
 
 async function rsvp(m: any, attending: boolean) {
+  if (
+    m.deadlinePassed &&
+    !confirm(
+      'The RSVP deadline for this meeting has passed. Your change will still be saved, but it will be marked as late (*) in the attendance list. Continue?'
+    )
+  ) {
+    return
+  }
   try {
     await $fetch(`/api/meetings/${m.id}/rsvp`, { method: 'POST', body: { attending } })
     await refresh()
@@ -40,6 +51,10 @@ async function saveRequest(m: any) {
 function pills(m: any) {
   return Object.entries(m.restrictionCounts || {}).map(([name, n]) => `${n}× ${name}`)
 }
+
+function headCount(m: any) {
+  return m.attendingCount + m.guestCount
+}
 </script>
 
 <template>
@@ -53,7 +68,7 @@ function pills(m: any) {
       </span>
     </div>
 
-    <h2 v-if="upcoming.length" style="margin: 4px 0 12px">Upcoming lab meetings</h2>
+    <h2 v-if="upcoming.length" class="page-title">Upcoming lab meetings</h2>
     <p v-else class="card muted">No upcoming meetings scheduled yet. Check back soon!</p>
 
     <div
@@ -68,7 +83,7 @@ function pills(m: any) {
           <div class="muted">{{ m.title }}</div>
         </div>
         <span v-if="m.status === 'cancelled'" class="badge-cancelled">Cancelled</span>
-        <span v-else-if="m.deadlinePassed" class="pill bad">RSVP closed</span>
+        <span v-else-if="m.deadlinePassed" class="pill late">RSVP closed · late changes flagged *</span>
         <span v-else class="pill warn">RSVP {{ deadlineCountdown(m.rsvpDeadline) }}</span>
       </div>
 
@@ -81,30 +96,31 @@ function pills(m: any) {
           <span v-if="m.menuNotes" class="muted small">{{ m.menuNotes }}</span>
         </div>
 
-        <div class="row mt">
-          <button
-            class="btn yes"
-            :class="{ on: m.myRsvp === true }"
-            :disabled="m.deadlinePassed"
-            @click="rsvp(m, true)"
-          >
+        <div class="row mt rsvp-row">
+          <button class="btn yes" :class="{ on: m.myRsvp === true }" @click="rsvp(m, true)">
             ✅ I'm in
           </button>
-          <button
-            class="btn no"
-            :class="{ on: m.myRsvp === false }"
-            :disabled="m.deadlinePassed"
-            @click="rsvp(m, false)"
-          >
+          <button class="btn no" :class="{ on: m.myRsvp === false }" @click="rsvp(m, false)">
             ❌ Can't make it
           </button>
-          <span class="muted small">
-            {{ m.attendingCount }} attending
-            <template v-if="pills(m).length"> · {{ pills(m).join(', ') }}</template>
-          </span>
+        </div>
+        <p v-if="m.myLate" class="late-text" style="margin: 6px 0 0">
+          * your response changed after the deadline — it still counts, but it's flagged in the list
+        </p>
+
+        <div class="row mt">
+          <button class="btn sm ghost" @click="showResponses = showResponses === m.id ? '' : m.id">
+            👥 {{ headCount(m) }} attending{{ pills(m).length ? ' · ' + pills(m).join(', ') : '' }}
+            {{ showResponses === m.id ? '▲' : '▼' }}
+          </button>
         </div>
 
-        <div v-if="m.caterer && m.myRsvp === true && !m.deadlinePassed" class="mt">
+        <div v-if="showResponses === m.id" class="mt">
+          <hr class="divider" />
+          <MeetingResponses :meeting-id="m.id" @changed="refresh" />
+        </div>
+
+        <div v-if="m.caterer && m.myRsvp === true" class="mt">
           <label class="field">
             Special request for {{ m.caterer.name }} (optional — e.g. "please make sure there's a margarita pizza")
             <div class="row">
@@ -117,6 +133,7 @@ function pills(m: any) {
             Remember as my usual for {{ m.caterer.name }}
           </label>
           <span v-if="savedNote === m.id" class="ok-text">Saved ✓</span>
+          <span v-if="m.deadlinePassed" class="late-text"> — deadline passed, requests are marked late (*)</span>
         </div>
         <p v-else-if="m.myRequest" class="muted small mt">Your request: “{{ m.myRequest }}”</p>
       </div>

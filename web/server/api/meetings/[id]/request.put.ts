@@ -12,15 +12,14 @@ export default defineEventHandler(async (event) => {
   if (!meeting.catererId) {
     throw createError({ statusCode: 400, statusMessage: 'No caterer selected for this meeting yet' })
   }
-  if (meeting.rsvpDeadline < new Date()) {
-    throw createError({ statusCode: 400, statusMessage: 'RSVP deadline has passed' })
-  }
+
+  const late = meeting.rsvpDeadline < new Date()
 
   if (text) {
     await db.mealRequest.upsert({
       where: { userId_meetingId: { userId: user.id, meetingId: id } },
-      create: { userId: user.id, meetingId: id, text },
-      update: { text }
+      create: { userId: user.id, meetingId: id, text, late },
+      update: { text, late }
     })
     if (body.saveAsUsual) {
       await db.catererPreference.upsert({
@@ -32,5 +31,5 @@ export default defineEventHandler(async (event) => {
   } else {
     await db.mealRequest.deleteMany({ where: { userId: user.id, meetingId: id } })
   }
-  return { ok: true }
+  return { ok: true, late }
 })

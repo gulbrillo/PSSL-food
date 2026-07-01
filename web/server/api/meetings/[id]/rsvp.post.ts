@@ -11,14 +11,14 @@ export default defineEventHandler(async (event) => {
   if (meeting.status === 'cancelled') {
     throw createError({ statusCode: 400, statusMessage: 'Meeting is cancelled' })
   }
-  if (meeting.rsvpDeadline < new Date()) {
-    throw createError({ statusCode: 400, statusMessage: 'RSVP deadline has passed' })
-  }
+
+  // changes are always allowed — after the deadline they are just flagged as late
+  const late = meeting.rsvpDeadline < new Date()
 
   await db.rsvp.upsert({
     where: { userId_meetingId: { userId: user.id, meetingId: id } },
-    create: { userId: user.id, meetingId: id, attending: !!body.attending },
-    update: { attending: !!body.attending }
+    create: { userId: user.id, meetingId: id, attending: !!body.attending, late },
+    update: { attending: !!body.attending, late }
   })
-  return { ok: true }
+  return { ok: true, late }
 })

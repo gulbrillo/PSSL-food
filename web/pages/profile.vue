@@ -5,6 +5,7 @@ const { data: restrictions, refresh: refreshRestrictions } = await useFetch('/ap
 
 const customName = ref('')
 const saving = ref(false)
+const lateNote = ref(0)
 
 const notice = computed(() => {
   if (route.query.linked) return { ok: true, text: 'Discord account linked! The bot can now remind you personally.' }
@@ -24,7 +25,11 @@ async function toggle(id: string) {
   ids.has(id) ? ids.delete(id) : ids.add(id)
   saving.value = true
   try {
-    await $fetch('/api/me/restrictions', { method: 'PUT', body: { restrictionIds: [...ids] } })
+    const res: any = await $fetch('/api/me/restrictions', {
+      method: 'PUT',
+      body: { restrictionIds: [...ids] }
+    })
+    lateNote.value = res.lateFlagged || 0
     await refreshMe()
   } finally {
     saving.value = false
@@ -79,6 +84,10 @@ async function unlinkDiscord() {
         />
         <button class="btn sm" :disabled="!customName.trim()" @click="addCustom">Add</button>
       </div>
+      <p v-if="lateNote" class="late-text mt">
+        * Heads-up: the RSVP deadline for {{ lateNote }} upcoming meeting{{ lateNote > 1 ? 's' : '' }}
+        already passed, so your change was flagged as late there. It still counts!
+      </p>
     </div>
 
     <div class="card">

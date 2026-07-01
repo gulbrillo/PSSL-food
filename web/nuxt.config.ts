@@ -17,8 +17,12 @@ export default defineNuxtConfig({
   },
   app: {
     head: {
-      title: 'PSSL Food',
-      meta: [{ name: 'viewport', content: 'width=device-width, initial-scale=1' }]
+      title: 'LunchPad · PSSL',
+      meta: [
+        { name: 'viewport', content: 'width=device-width, initial-scale=1' },
+        { name: 'theme-color', content: '#0a1856' }
+      ],
+      link: [{ rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' }]
     }
   }
 })

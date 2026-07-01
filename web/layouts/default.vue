@@ -12,7 +12,13 @@ async function signOut() {
   <div>
     <header v-if="loggedIn" class="site-header">
       <div class="inner">
-        <NuxtLink to="/" class="brand">🍕 PSSL <span class="accent">Food</span></NuxtLink>
+        <NuxtLink to="/" class="brand">
+          <AppLogo :size="34" />
+          <span>
+            Lunch<span class="accent">Pad</span>
+            <span class="sub">PSSL · Lab Meeting RSVP</span>
+          </span>
+        </NuxtLink>
         <nav>
           <NuxtLink to="/">Meetings</NuxtLink>
           <NuxtLink to="/caterers">Caterers</NuxtLink>

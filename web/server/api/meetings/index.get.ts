@@ -20,6 +20,7 @@ export default defineEventHandler(async (event) => {
       include: {
         caterer: true,
         requests: true,
+        guests: true,
         rsvps: {
           include: {
             user: {
@@ -35,10 +36,12 @@ export default defineEventHandler(async (event) => {
   return meetings.map((m) => {
     const attending = m.rsvps.filter((r) => r.attending)
     const restrictionCounts: Record<string, number> = {}
+    const bump = (name: string) => (restrictionCounts[name] = (restrictionCounts[name] || 0) + 1)
     for (const r of attending) {
-      for (const ur of r.user.restrictions) {
-        restrictionCounts[ur.restriction.name] = (restrictionCounts[ur.restriction.name] || 0) + 1
-      }
+      for (const ur of r.user.restrictions) bump(ur.restriction.name)
+    }
+    for (const g of m.guests) {
+      for (const name of g.restrictions) bump(name)
     }
     const myRsvp = m.rsvps.find((r) => r.userId === user.id)
     const myRequest = m.requests.find((r) => r.userId === user.id)
@@ -55,9 +58,11 @@ export default defineEventHandler(async (event) => {
         ? { id: m.caterer.id, name: m.caterer.name, cuisine: m.caterer.cuisine, url: m.caterer.url }
         : null,
       attendingCount: attending.length,
+      guestCount: m.guests.length,
       notAttendingCount: m.rsvps.filter((r) => !r.attending).length,
       restrictionCounts,
       myRsvp: myRsvp ? myRsvp.attending : null,
+      myLate: myRsvp?.late ?? false,
       myRequest: myRequest?.text ?? null,
       suggestedRequest: myRequest?.text ?? myUsual?.text ?? '',
       deadlinePassed: m.rsvpDeadline < now

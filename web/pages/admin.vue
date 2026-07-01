@@ -70,21 +70,14 @@ const upcoming = computed(() =>
 )
 
 const expanded = ref('')
-const summaries = reactive<Record<string, any>>({})
 
-async function toggleDetails(m: any) {
-  if (expanded.value === m.id) {
-    expanded.value = ''
-    return
-  }
-  expanded.value = m.id
-  summaries[m.id] = await $fetch(`/api/meetings/${m.id}/summary`)
+function toggleDetails(m: any) {
+  expanded.value = expanded.value === m.id ? '' : m.id
 }
 
 async function patchMeeting(id: string, data: any) {
   await $fetch(`/api/meetings/${id}`, { method: 'PATCH', body: data })
   await refreshMeetings()
-  if (summaries[id]) summaries[id] = await $fetch(`/api/meetings/${id}/summary`)
 }
 
 async function removeMeeting(m: any) {
@@ -162,7 +155,7 @@ async function toggleCatererActive(c: any) {
       <div class="row">
         <strong class="grow">{{ fmtDateTime(m.date) }}</strong>
         <span v-if="m.status === 'cancelled'" class="badge-cancelled">Cancelled</span>
-        <span class="pill">{{ m.attendingCount }} attending</span>
+        <span class="pill">{{ m.attendingCount + m.guestCount }} attending</span>
       </div>
 
       <div class="row mt">
@@ -210,42 +203,9 @@ async function toggleCatererActive(c: any) {
         <button class="btn sm danger" @click="removeMeeting(m)">Delete</button>
       </div>
 
-      <div v-if="expanded === m.id && summaries[m.id]" class="mt">
+      <div v-if="expanded === m.id" class="mt">
         <hr class="divider" />
-        <div class="row" style="align-items: flex-start">
-          <div class="grow">
-            <h3>✅ Attending ({{ summaries[m.id].attending.length }})</h3>
-            <table class="plain">
-              <tr v-for="a in summaries[m.id].attending" :key="a.name">
-                <td>{{ a.name }}</td>
-                <td><span v-for="r in a.restrictions" :key="r" class="pill warn" style="margin-right: 4px">{{ r }}</span></td>
-              </tr>
-            </table>
-          </div>
-          <div class="grow">
-            <h3>🍽️ Order summary</h3>
-            <p v-if="!Object.keys(summaries[m.id].restrictionCounts).length" class="muted small">
-              No dietary restrictions among attendees.
-            </p>
-            <table class="plain">
-              <tr v-for="(n, name) in summaries[m.id].restrictionCounts" :key="name">
-                <td>{{ name }}</td><td><strong>{{ n }}</strong></td>
-              </tr>
-            </table>
-            <template v-if="summaries[m.id].requests.length">
-              <h3 class="mt">📝 Special requests</h3>
-              <table class="plain">
-                <tr v-for="q in summaries[m.id].requests" :key="q.name">
-                  <td>{{ q.name }}</td><td>“{{ q.text }}”</td>
-                </tr>
-              </table>
-            </template>
-          </div>
-        </div>
-        <p class="muted small mt">
-          ❌ Not attending: {{ summaries[m.id].notAttending.join(', ') || '—' }}<br />
-          😶 No response yet: {{ summaries[m.id].noResponse.join(', ') || '—' }}
-        </p>
+        <MeetingResponses :meeting-id="m.id" @changed="refreshMeetings" />
       </div>
     </div>
 

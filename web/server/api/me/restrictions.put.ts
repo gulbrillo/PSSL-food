@@ -13,5 +13,18 @@ export default defineEventHandler(async (event) => {
       skipDuplicates: true
     })
   ])
-  return { ok: true }
+
+  // Restriction changes affect the headcount of meetings whose RSVP deadline
+  // already passed — flag those RSVPs as late so the order summary shows it.
+  const now = new Date()
+  const flagged = await db.rsvp.updateMany({
+    where: {
+      userId: user.id,
+      attending: true,
+      meeting: { rsvpDeadline: { lt: now }, date: { gt: now }, status: 'scheduled' }
+    },
+    data: { late: true }
+  })
+
+  return { ok: true, lateFlagged: flagged.count }
 })
