@@ -9,6 +9,8 @@ export default defineNuxtConfig({
     wpClientSecret: '',
     discordClientId: '',
     discordClientSecret: '',
+    discordBotToken: '',
+    discordChannelId: '',
     botApiToken: '',
     adminEmails: '',
     public: {

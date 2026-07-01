@@ -102,6 +102,22 @@ async function removeMeeting(m: any) {
   await refreshMeetings()
 }
 
+const sendingReminder = ref('')
+async function sendReminder(m: any) {
+  sendingReminder.value = m.id
+  try {
+    await $fetch(`/api/meetings/${m.id}/remind`, { method: 'POST' })
+    dialog.notify(
+      `An RSVP reminder for "${m.title}" was just posted in the Discord channel.`,
+      'Reminder sent 📣'
+    )
+  } catch (e: any) {
+    dialog.notify(e.data?.statusMessage || 'Could not post to Discord — please try again.', 'Something went wrong')
+  } finally {
+    sendingReminder.value = ''
+  }
+}
+
 function onReschedule(m: any, ev: Event) {
   const v = (ev.target as HTMLInputElement).value
   if (v) patchMeeting(m.id, { date: new Date(v).toISOString() })
@@ -233,6 +249,15 @@ async function saveRestriction(r: any) {
         <div class="row mt">
           <button class="btn sm" @click="toggleDetails(m)">
             {{ expanded === m.id ? 'Hide responses' : 'View responses' }}
+          </button>
+          <button
+            v-if="m.status === 'scheduled'"
+            class="btn sm"
+            :disabled="sendingReminder === m.id"
+            title="Posts an RSVP reminder for this meeting to the lab's Discord channel right now — independent of the automatic reminders."
+            @click="sendReminder(m)"
+          >
+            📣 {{ sendingReminder === m.id ? 'Sending…' : 'Discord reminder' }}
           </button>
           <button
             v-if="m.status === 'scheduled'"

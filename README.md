@@ -158,7 +158,10 @@ ones, assigns caterer + menu notes, and manages the caterer list.
 
 ## Reminders (bot)
 
-Checked every 10 minutes; each fires once per meeting:
+Admins can also push a reminder manually at any time: **Admin → Upcoming meetings →
+📣 Discord reminder** posts an RSVP call for that meeting to the channel immediately.
+
+Automatic reminders are checked every 10 minutes; each fires once per meeting:
 
 | When (before RSVP deadline)      | What                                                        |
 | -------------------------------- | ----------------------------------------------------------- |
