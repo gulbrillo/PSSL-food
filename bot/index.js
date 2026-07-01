@@ -50,7 +50,22 @@ const rsvpRow = (meetingId) =>
     new ButtonBuilder().setCustomId(`rsvp|no|${meetingId}`).setLabel("Can't make it ❌").setStyle(ButtonStyle.Danger)
   )
 
-const NOT_LINKED_MSG = `Looks like your Discord isn't linked to LunchPad yet — that takes 10 seconds: open ${PUBLIC_APP_URL}/profile, click **Connect Discord**, then tap the button again.`
+/** Red error embed: the click did NOT register — impossible to miss. */
+const notLinkedPayload = () => ({
+  embeds: [
+    new EmbedBuilder()
+      .setColor(0xcf2f3e)
+      .setTitle('🚨 Your RSVP was NOT recorded')
+      .setDescription(
+        `Your Discord account isn't linked to LunchPad yet, so I don't know who you are.\n\n` +
+          `**Fix it in 10 seconds:**\n` +
+          `1. Open ${PUBLIC_APP_URL}/profile\n` +
+          `2. Click **Connect Discord**\n` +
+          `3. Come back and tap the RSVP button again`
+      )
+  ],
+  ephemeral: true
+})
 
 function rsvpReply(result, attending) {
   const when = ts(result.meeting.date)
@@ -63,12 +78,14 @@ function rsvpReply(result, attending) {
   return msg
 }
 
-function rsvpErrorReply(e) {
-  if (e.status === 404 && e.message.includes('not_linked')) return NOT_LINKED_MSG
-  if (e.message.includes('no_open_meeting')) return 'There is no upcoming meeting to RSVP for right now.'
-  if (e.message.includes('meeting_cancelled')) return 'That meeting has been cancelled — no food to RSVP for.'
-  if (e.message.includes('meeting_over')) return 'That meeting has already happened.'
-  return 'Something went wrong, please try again later.'
+/** Reply payload for a failed RSVP — not-linked gets the loud red embed. */
+function rsvpErrorPayload(e) {
+  if (e.status === 404 && e.message.includes('not_linked')) return notLinkedPayload()
+  let content = '⚠️ Your RSVP was **not** recorded — something went wrong, please try again later.'
+  if (e.message.includes('no_open_meeting')) content = 'There is no upcoming meeting to RSVP for right now.'
+  else if (e.message.includes('meeting_cancelled')) content = 'That meeting has been cancelled — no food to RSVP for.'
+  else if (e.message.includes('meeting_over')) content = 'That meeting has already happened.'
+  return { content, ephemeral: true }
 }
 
 /* ------------------------------------------------------------- reminders */
@@ -179,7 +196,7 @@ async function handleInteraction(interaction) {
       })
       await interaction.reply({ content: rsvpReply(result, attending), ephemeral: true })
     } catch (e) {
-      await interaction.reply({ content: rsvpErrorReply(e), ephemeral: true })
+      await interaction.reply(rsvpErrorPayload(e))
     }
     return
   }
@@ -200,7 +217,7 @@ async function handleInteraction(interaction) {
         msg += `\n(No caterer is set for that meeting yet, so your request wasn't saved.)`
       await interaction.reply({ content: msg, ephemeral: true })
     } catch (e) {
-      await interaction.reply({ content: rsvpErrorReply(e), ephemeral: true })
+      await interaction.reply(rsvpErrorPayload(e))
     }
   }
 
