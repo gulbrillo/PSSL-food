@@ -1,0 +1,68 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: pssl
+      POSTGRES_DB: psslfood
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pssl -d psslfood"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  web:
+    build: ./web
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://pssl:${POSTGRES_PASSWORD}@db:5432/psslfood
+      NUXT_SESSION_PASSWORD: ${SESSION_PASSWORD}
+      NUXT_PUBLIC_APP_URL: https://${DOMAIN}
+      NUXT_WP_BASE_URL: ${WP_BASE_URL}
+      NUXT_WP_CLIENT_ID: ${WP_CLIENT_ID}
+      NUXT_WP_CLIENT_SECRET: ${WP_CLIENT_SECRET}
+      NUXT_DISCORD_CLIENT_ID: ${DISCORD_CLIENT_ID}
+      NUXT_DISCORD_CLIENT_SECRET: ${DISCORD_CLIENT_SECRET}
+      NUXT_BOT_API_TOKEN: ${BOT_API_TOKEN}
+      NUXT_ADMIN_EMAILS: ${ADMIN_EMAILS}
+      TZ: America/New_York
+
+  bot:
+    build: ./bot
+    restart: unless-stopped
+    depends_on:
+      - web
+    environment:
+      DISCORD_BOT_TOKEN: ${DISCORD_BOT_TOKEN}
+      DISCORD_GUILD_ID: ${DISCORD_GUILD_ID}
+      DISCORD_CHANNEL_ID: ${DISCORD_CHANNEL_ID}
+      WEB_API_URL: http://web:3000
+      PUBLIC_APP_URL: https://${DOMAIN}
+      BOT_API_TOKEN: ${BOT_API_TOKEN}
+      CHANNEL_REMINDER_HOURS: ${CHANNEL_REMINDER_HOURS:-48}
+      DM_REMINDER_HOURS: ${DM_REMINDER_HOURS:-24}
+      TZ: America/New_York
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  db_data:
+  caddy_data:
+  caddy_config:

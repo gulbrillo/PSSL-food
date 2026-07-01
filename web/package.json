@@ -1,0 +1,15 @@
+{
+  "name": "pssl-food-web",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "nuxt dev",
+    "build": "nuxt build"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.7.0",
+    "nuxt": "^3.17.0",
+    "nuxt-auth-utils": "^0.5.20",
+    "prisma": "^6.7.0"
+  }
+}
