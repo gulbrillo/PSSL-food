@@ -50,6 +50,15 @@ export default defineEventHandler(async (event) => {
             title: `🍕 RSVP for ${meeting.title}`,
             description
           }
+        ],
+        components: [
+          {
+            type: 1, // action row
+            components: [
+              { type: 2, style: 3, label: "I'm in ✅", custom_id: `rsvp|yes|${meeting.id}` },
+              { type: 2, style: 4, label: "Can't make it ❌", custom_id: `rsvp|no|${meeting.id}` }
+            ]
+          }
         ]
       }
     })
